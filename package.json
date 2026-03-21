@@ -5,45 +5,30 @@
   "author": "Optivus Kyte",
   "license": "MIT",
   "type": "module",
-  "bin": {
-    "kyte": "dist/index.js"
-  },
-  "main": "dist/index.js",
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
     "dev": "vite",
-    "start": "node dist/index.js",
-    "web:dev": "vite",
-    "web:build": "vite build",
-    "web:preview": "vite preview",
-    "cli:dev": "tsx src/index.ts",
-    "cli:test": "tsx src/index.ts test",
-    "backend:dev": "npm run dev --prefix backend",
-    "backend:build": "npm run build --prefix backend",
-    "backend:start": "npm run start --prefix backend",
-    "judge:demo": "npm run cli:test"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@perawallet/connect": "^1.5.1",
     "@supabase/supabase-js": "^2.99.3",
-    "@types/inquirer": "^9.0.9",
-    "commander": "^14.0.1",
+    "algosdk": "^3.5.2",
+    "axios": "^1.13.6",
+    "canvas-confetti": "^1.9.4",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
-    "inquirer": "^13.3.2",
     "lucide-react": "^0.577.0",
-    "open": "^10.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.13.1",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
-    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vite": "^5.2.0"
   }

@@ -11,7 +11,6 @@ import FAQ from './components/FAQ'
 import Blog from './components/Blog'
 import Footer from './components/Footer'
 import SignIn from './components/SignIn'
-import Verify from './components/Verify'
 import Dashboard from './components/Dashboard'
 
 function LandingPage() {
@@ -37,7 +36,6 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/verify" element={<Verify />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </div>
