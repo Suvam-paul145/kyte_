@@ -58,6 +58,7 @@ export async function createProject(token, data) {
   });
   
   if (error) throw new Error(error.message || "Failed to create project");
+  if (result && result.error) throw new Error(result.error);
   return result;
 }
 
@@ -72,6 +73,7 @@ export async function submitProject(token, data) {
   });
 
   if (error) throw new Error(error.message || "Failed to submit project");
+  if (result && result.error) throw new Error(result.error);
   return result;
 }
 

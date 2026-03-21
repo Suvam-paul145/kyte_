@@ -11,7 +11,7 @@ class GeminiService:
         if not api_key:
             raise Exception("GEMINI_API_KEY not set")
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-1.5-flash")
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
 
     async def evaluate(self, requirements: List[str], content: str) -> EvaluationResult:
         prompt = self._build_prompt(requirements, content)
