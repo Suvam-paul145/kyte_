@@ -105,7 +105,7 @@ serve(async (req) => {
 
       // List Gemini Models
       console.log("Listing Gemini models...");
-      let modelName = "gemini-1.5-flash";
+      let modelName = "gemini-2.5-flash";
       
       if (geminiApiKey !== "dummy") {
         const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
@@ -117,10 +117,10 @@ serve(async (req) => {
         }
         
         // Select Default Model
-        const flashModel = modelsData.models?.find((m: any) => m.name.includes("gemini-2.0-flash")) || 
+        const flashModel = modelsData.models?.find((m: any) => m.name.includes("gemini-2.5-flash")) || 
                            modelsData.models?.find((m: any) => m.name.includes("gemini-1.5-flash")) || 
                            modelsData.models[0];
-        modelName = flashModel ? flashModel.name.split("/")[1] : "gemini-1.5-flash"; // default fallback
+        modelName = flashModel ? flashModel.name.split("/")[1] : "gemini-2.5-flash"; // default fallback
       } else {
         console.log("Mocking Gemini model selection (dummy key detected)");
       }
@@ -278,10 +278,11 @@ Ensure the "results" array contains an entry for EVERY requirement listed above.
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
     
-  } catch (error) {
-    console.error(error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+  } catch (err) {
+    const error = err as Error;
+    console.error('Edge Function Error:', error.message, error.stack)
+    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+      status: 200, // Returning 200 with error property so client can parse it instead of raw 500 error page
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
