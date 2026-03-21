@@ -3,12 +3,46 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { Link, useNavigate as useRouter } from "react-router-dom";
+import { Shield } from 'lucide-react';
+import useStore from '../store/useStore';
+import { connectWallet } from '../services/wallet';
+import { issueKyteToken } from '../services/kyteApi';
 
 export default function SignIn() {
   const router = useRouter();
+  const { setWalletAddress, setJwtToken } = useStore();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handlePeraConnect = async () => {
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      const address = await connectWallet();
+      if (address) {
+        setWalletAddress(address);
+        setErrorMessage("Please check your Pera Wallet app to approve the signature...");
+        try {
+          const token = await issueKyteToken(address);
+          setJwtToken(token);
+          router('/dashboard');
+        } catch (e) {
+          console.error("Auth failed", e);
+          setErrorMessage(e.message || "Failed to issue session token. Check backend.");
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+        setErrorMessage("Wallet connection was cancelled or failed.");
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Wallet connection failed.");
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -188,10 +222,8 @@ export default function SignIn() {
             {/* Pera Wallet Button */}
             <motion.button
               className="btn-primary"
-              onClick={() => {
-                const navBtn = document.querySelector('.navbar .btn-signin')
-                if (navBtn) navBtn.click();
-              }}
+              onClick={handlePeraConnect}
+              disabled={isLoading}
               style={{ width: '100%', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: 'linear-gradient(135deg, #1d976c 0%, #93f9b9 100%)', color: '#000', fontWeight: 600 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

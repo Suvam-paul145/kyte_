@@ -45,18 +45,55 @@ export async function issueKyteToken(address) {
   return result.token;
 }
 
+import { supabase } from '../supabaseClient';
+
 export async function createProject(token, data) {
-  return request("/project/create", { method: "POST", token, body: data });
+  // Edge Function expects: action: 'create', geminiApiKey: data.geminiApiKey, data: {title, ...}
+  const { data: result, error } = await supabase.functions.invoke('gemini-audit', {
+    body: {
+      action: 'create',
+      geminiApiKey: data.geminiApiKey,
+      data: data
+    }
+  });
+  
+  if (error) throw new Error(error.message || "Failed to create project");
+  return result;
 }
 
 export async function submitProject(token, data) {
-  return request("/project/submit", { method: "POST", token, body: data });
+  // Edge Function expects: action: 'submit', geminiApiKey: data.geminiApiKey, data: {projectId, githubUrl}
+  const { data: result, error } = await supabase.functions.invoke('gemini-audit', {
+    body: {
+      action: 'submit',
+      geminiApiKey: data.geminiApiKey,
+      data: data
+    }
+  });
+
+  if (error) throw new Error(error.message || "Failed to submit project");
+  return result;
 }
 
 export async function getProjectStatus(token, projectId) {
-  return request(`/project/${projectId}/status`, { token });
+  const { data, error } = await supabase
+    .from('projects')
+    .select('status')
+    .eq('id', projectId)
+    .single();
+    
+  if (error) throw error;
+  return data;
 }
 
 export async function getProjectReport(token, projectId) {
-  return request(`/project/${projectId}/report`, { token });
+  const { data, error } = await supabase
+    .from('projects')
+    .select('evaluation_result')
+    .eq('id', projectId)
+    .single();
+    
+  if (error) throw error;
+  return data;
 }
+

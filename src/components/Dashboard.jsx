@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import useStore from "../store/useStore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { supabase } from '../supabaseClient';
 import {
   createProject,
   getProjectReport,
@@ -23,18 +24,46 @@ export default function Dashboard() {
   const [evaluation, setEvaluation] = useState(null);
   const [evaluating, setEvaluating] = useState(false);
   const [view, setView] = useState("discover"); // discover, manage, details
+  const [geminiApiKey, setGeminiApiKey] = useState("");
 
   const router = useRouter();
+  const [session, setSession] = useState(null);
+
+
   useEffect(() => {
-    if (!walletAddress) {
-       router('/');
-    }
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      if (!currentSession && !walletAddress) {
+         router('/');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      if (!currentSession && !walletAddress) {
+         router('/');
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, [walletAddress, router]);
 
   const handleCreateDemoProject = async () => {
+    if (!walletAddress) {
+      alert("Please connect your wallet first to create a project.");
+      return;
+    }
+    if (!geminiApiKey) {
+      alert("Please enter your Gemini API Key at the top of the Dashboard first.");
+      return;
+    }
     setLoading(true);
     try {
       const result = await createProject(jwtToken, {
+        geminiApiKey,
+        wallet_address: walletAddress,
         title: "Algorand Smart Contract Audit",
         description: "Audit the provided PyTeal contract for security vulnerabilities.",
         requirements: [
@@ -47,7 +76,7 @@ export default function Dashboard() {
         score_threshold: 80,
       });
       setProjects([...projects, result]);
-      setActiveProjectId(result.project_id);
+      setActiveProjectId(result.id || result.project_id);
       setView("details");
     } catch (error) {
       alert(error.message);
@@ -58,15 +87,24 @@ export default function Dashboard() {
 
   const handleSubmit = async () => {
     if (!submissionUrl) return;
+    if (!geminiApiKey) {
+      alert("Please enter your Gemini API Key at the top of the Dashboard first.");
+      return;
+    }
     setEvaluating(true);
     setEvaluation(null);
     try {
       const result = await submitProject(jwtToken, {
-        project_id: activeProjectId,
-        submission_url: submissionUrl,
+        geminiApiKey,
+        projectId: activeProjectId,
+        githubUrl: submissionUrl,
       });
-      setEvaluation(result);
-      if (result.overall_score >= 80) {
+
+      // result is the updated project record, the actual evaluation is in evaluation_result
+      const evalData = result.evaluation_result || {};
+      setEvaluation(evalData);
+      
+      if (evalData.overall_score >= 80) {
         confetti({
           particleCount: 150,
           spread: 70,
@@ -81,7 +119,7 @@ export default function Dashboard() {
     }
   };
 
-  const activeProject = projects.find(p => p.project_id === activeProjectId);
+  const activeProject = projects.find(p => (p.id || p.project_id) === activeProjectId);
 
   return (
     <div className="dashboard-root" style={{ minHeight: "100vh", background: "#060912", color: "#fff" }}>
@@ -100,7 +138,14 @@ export default function Dashboard() {
                 </motion.p>
                 <h1 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Dashboard</h1>
             </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input 
+                  type="password" 
+                  placeholder="Paste Gemini API Key" 
+                  value={geminiApiKey} 
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  style={{ padding: '0.6rem 1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', outline: 'none', width: '250px' }}
+                />
                 <button 
                   onClick={() => setView("discover")}
                   className={`btn-${view === "discover" ? "primary" : "secondary"}`}
@@ -117,6 +162,7 @@ export default function Dashboard() {
                 </button>
             </div>
         </div>
+
 
         {/* Discover View */}
         {view === "discover" && (
@@ -136,7 +182,7 @@ export default function Dashboard() {
 
                 {projects.map((p, i) => (
                     <motion.div 
-                        key={p.project_id}
+                        key={p.id || p.project_id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
@@ -156,7 +202,7 @@ export default function Dashboard() {
                         <button 
                             className="btn-primary" 
                             style={{ width: '100%', fontSize: '0.8rem' }}
-                            onClick={() => { setActiveProjectId(p.project_id); setView("details"); }}
+                            onClick={() => { setActiveProjectId(p.id || p.project_id); setView("details"); }}
                         >
                             View Details
                         </button>
@@ -237,8 +283,8 @@ export default function Dashboard() {
                 >
                     <div style={{ textAlign: 'center' }}>
                         <div className="signin-spinner" style={{ width: '60px', height: '60px', margin: '0 auto 2rem' }} />
-                        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Gemini 1.5 Flash Auditing...</h2>
-                        <p style={{ opacity: 0.6 }}>Scanning code against {activeProject?.requirements.length} requirements</p>
+                        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Gemini AI Auditing...</h2>
+                        <p style={{ opacity: 0.6 }}>Fetching repository & scanning code against {activeProject?.requirements.length} requirements</p>
                     </div>
                 </motion.div>
             )}
@@ -272,7 +318,7 @@ export default function Dashboard() {
                         </div>
 
                         <div style={{ display: 'grid', gap: '1rem', marginBottom: '3rem' }}>
-                            {evaluation.results.map((res, i) => (
+                            {(evaluation.results || []).map((res, i) => (
                                 <div key={i} style={{ display: 'flex', gap: '1rem', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', alignItems: 'flex-start' }}>
                                     {res.met ? <CheckCircle2 color="#4ade80" size={20} /> : <AlertCircle color="#f87171" size={20} />}
                                     <div style={{ flex: 1 }}>
