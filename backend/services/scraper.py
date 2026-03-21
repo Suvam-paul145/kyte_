@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 
 class ScraperService:
-    async def fetch_content(self, url: str) -> str:
+    async def scrape_url(self, url: str) -> str:
         if "github.com" in url:
             return await self._fetch_github_readme(url)
         return await self._fetch_web_content(url)

@@ -212,7 +212,8 @@ Ensure the "results" array contains an entry for EVERY requirement listed above.
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
-              responseMimeType: "application/json"
+              responseMimeType: "application/json",
+              temperature: 0
             }
           })
         });

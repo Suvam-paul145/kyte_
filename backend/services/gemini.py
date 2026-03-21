@@ -13,10 +13,13 @@ class GeminiService:
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel("gemini-2.5-flash")
 
-    async def evaluate(self, requirements: List[str], content: str) -> EvaluationResult:
+    async def evaluate_code(self, requirements: List[str], content: str) -> EvaluationResult:
         prompt = self._build_prompt(requirements, content)
         
-        response = self.model.generate_content(prompt)
+        response = self.model.generate_content(
+            prompt,
+            generation_config={"temperature": 0}
+        )
         text = response.text
         
         # Clean JSON response
