@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -13,9 +14,9 @@ export default function Navbar() {
     <nav className={`navbar${scrolled ? ' scrolled' : ''}`}>
       <div className="navbar-inner container">
         {/* Logo */}
-        <a href="#home" className="wavenet-logo">
+        <Link to="/" className="wavenet-logo">
           <span className="logo-wave">KYTE</span>
-        </a>
+        </Link>
 
         {/* Center Nav Links */}
         <ul className="navbar-links">
@@ -27,7 +28,7 @@ export default function Navbar() {
         </ul>
 
         {/* Sign In Button */}
-        <a href="#contact" className="btn-signin">SIGN IN</a>
+        <Link to="/signin" className="btn-signin">SIGN IN</Link>
       </div>
     </nav>
   )

@@ -1,23 +1,50 @@
 {
   "name": "optivus-kyte",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Terminal-native autonomous AI agent for developers",
+  "author": "Optivus Kyte",
+  "license": "MIT",
   "type": "module",
+  "bin": {
+    "kyte": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "node dist/index.js",
+    "web:dev": "vite",
+    "web:build": "vite build",
+    "web:preview": "vite preview",
+    "cli:dev": "tsx src/index.ts",
+    "cli:test": "tsx src/index.ts test",
+    "backend:dev": "npm run dev --prefix backend",
+    "backend:build": "npm run build --prefix backend",
+    "backend:start": "npm run start --prefix backend",
+    "judge:demo": "npm run cli:test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.99.3",
+    "@types/inquirer": "^9.0.9",
+    "commander": "^14.0.1",
     "framer-motion": "^12.38.0",
+    "inquirer": "^13.3.2",
     "lucide-react": "^0.577.0",
+    "open": "^10.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
+    "@types/node": "^24.5.2",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
     "vite": "^5.2.0"
   }
 }
