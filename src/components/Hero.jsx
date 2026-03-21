@@ -33,15 +33,14 @@ export default function Hero() {
       <div className="orb orb-mid-left" />
       <div className="orb-torus" />
 
-      {/* Floating CLI terminal badge — top right */}
+      {/* Floating SaaS badge — top right */}
       <div className="cli-badge cli-badge-tr">
-        <span className="cli-prompt">$</span> kyte run --agent auto
-        <span className="cli-cursor">▋</span>
+        <span className="cli-prompt">✨</span> New Update Available
       </div>
 
       {/* Floating output badge — bottom left */}
       <div className="cli-badge cli-badge-bl">
-        <span className="cli-ok">✔</span> Task completed in 1.2s
+        <span className="cli-ok">✔</span> 99.99% Uptime SLA
       </div>
 
       {/* Hero Content — Centered */}
@@ -49,14 +48,14 @@ export default function Hero() {
         <h1 className="hero-headline">
           <span className="hero-line-1">YOUR BEST</span>
           <span className="hero-line-2">
-            <em className="hero-it">CLI </em>
-            <span className="hero-partners">AGENT</span>
+            <em className="hero-it">SAAS </em>
+            <span className="hero-partners">PLATFORM</span>
           </span>
         </h1>
 
         <p className="hero-desc">
-          KYTE is a terminal-native, autonomous AI agent that plans, executes, and iterates<br />
-          on complex tasks — entirely from your command line, with zero configuration.
+          KYTE is a next-generation web application template featuring premium<br />
+          glassmorphism aesthetics, modern animations, and built-in authentication.
         </p>
 
         <a href="#features" className="btn-explore">

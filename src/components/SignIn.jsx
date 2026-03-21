@@ -1,10 +1,11 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate as useRouter } from "react-router-dom";
 
-const SignIn = () => {
-  const navigate = useNavigate();
+export default function SignIn() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -152,7 +153,7 @@ const SignIn = () => {
             {/* Back button */}
             <button
               className="signin-back-btn"
-              onClick={() => navigate('/')}
+              onClick={() => router('/')}
               aria-label="Back to home"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -183,6 +184,21 @@ const SignIn = () => {
             <div className="signin-divider">
               <span>Continue with</span>
             </div>
+
+            {/* Pera Wallet Button */}
+            <motion.button
+              className="btn-primary"
+              onClick={() => {
+                const navBtn = document.querySelector('.navbar .btn-signin')
+                if (navBtn) navBtn.click();
+              }}
+              style={{ width: '100%', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: 'linear-gradient(135deg, #1d976c 0%, #93f9b9 100%)', color: '#000', fontWeight: 600 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Shield size={18} />
+              <span>Connect Pera Wallet</span>
+            </motion.button>
 
             {/* Google Button */}
             <motion.button
@@ -248,4 +264,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+

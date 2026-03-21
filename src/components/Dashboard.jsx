@@ -1,167 +1,314 @@
+"use client"
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { supabase } from "../supabaseClient";
+import { Link, useNavigate as useRouter } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import useStore from "../store/useStore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import {
+  createProject,
+  getProjectReport,
+  getProjectStatus,
+  submitProject,
+} from "../services/kyteApi";
+import { CheckCircle2, XCircle, AlertCircle, Github, ExternalLink, Zap, Shield, Search } from "lucide-react";
+import confetti from "canvas-confetti";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { walletAddress, jwtToken } = useStore();
+  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [activeProjectId, setActiveProjectId] = useState(null);
+  const [submissionUrl, setSubmissionUrl] = useState("");
+  const [evaluation, setEvaluation] = useState(null);
+  const [evaluating, setEvaluating] = useState(false);
+  const [view, setView] = useState("discover"); // discover, manage, details
 
+  const router = useRouter();
   useEffect(() => {
-    const loadUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/signin");
-      } else {
-        setUser(user);
-      }
+    if (!walletAddress) {
+       router('/');
+    }
+  }, [walletAddress, router]);
+
+  const handleCreateDemoProject = async () => {
+    setLoading(true);
+    try {
+      const result = await createProject(jwtToken, {
+        title: "Algorand Smart Contract Audit",
+        description: "Audit the provided PyTeal contract for security vulnerabilities.",
+        requirements: [
+          "Check for reentrancy issues",
+          "Verify permission checks on DeleteApplication",
+          "Ensure global state is updated correctly",
+          "Max 1000 lines of code"
+        ],
+        payment_algo: 10.5,
+        score_threshold: 80,
+      });
+      setProjects([...projects, result]);
+      setActiveProjectId(result.project_id);
+      setView("details");
+    } catch (error) {
+      alert(error.message);
+    } finally {
       setLoading(false);
-    };
-
-    void loadUser();
-  }, [navigate]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="signin-page" style={{ display: 'grid', placeItems: 'center' }}>
-        <div className="signin-spinner" style={{ width: '40px', height: '40px' }} />
-      </div>
-    );
-  }
+  const handleSubmit = async () => {
+    if (!submissionUrl) return;
+    setEvaluating(true);
+    setEvaluation(null);
+    try {
+      const result = await submitProject(jwtToken, {
+        project_id: activeProjectId,
+        submission_url: submissionUrl,
+      });
+      setEvaluation(result);
+      if (result.overall_score >= 80) {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#66d3ff', '#759aff', '#ffffff']
+        });
+      }
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setEvaluating(false);
+    }
+  };
 
-  const avatarUrl = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user?.email}&background=11192b&color=66d3ff`;
-  const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Kyte Developer';
+  const activeProject = projects.find(p => p.project_id === activeProjectId);
 
   return (
-    <div className="app" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e1a" }}>
+    <div className="dashboard-root" style={{ minHeight: "100vh", background: "#060912", color: "#fff" }}>
       <Navbar />
       
-      <main style={{ flex: 1, padding: "8rem 2rem 4rem", maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "3rem" }}>
+      <main className="container" style={{ padding: "8rem 1rem 4rem" }}>
+        
+        {/* Header Section */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
             <div>
-              <p className="section-label" style={{ marginBottom: "0.5rem" }}>Developer Portal</p>
-              <h1 style={{ fontSize: "2.5rem", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: "#fff" }}>
-                Dashboard
-              </h1>
+                <motion.p 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="signin-eyebrow" style={{ color: "var(--primary)", marginBottom: '0.5rem' }}
+                >
+                    {walletAddress ? "Connected to Algorand TestNet" : "Connect wallet to participate"}
+                </motion.p>
+                <h1 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Dashboard</h1>
             </div>
-            <button 
-              onClick={handleSignOut}
-              className="btn-secondary" 
-              style={{ padding: "0.5rem 1.2rem", fontSize: "0.85rem", height: "fit-content" }}
-            >
-              Sign Out
-            </button>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem" }}>
-            {/* Left Column - Profile */}
-            <div className="glass-card" style={{ padding: "2rem", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", height: "fit-content" }}>
-              <div style={{ position: "relative", marginBottom: "1.5rem" }}>
-                <img 
-                  src={avatarUrl} 
-                  alt="Profile" 
-                  style={{ width: "96px", height: "96px", borderRadius: "50%", border: "2px solid rgba(102, 211, 255, 0.3)", padding: "4px", background: "#0a0e1a" }} 
-                />
-                <div style={{ position: "absolute", bottom: "4px", right: "4px", width: "16px", height: "16px", background: "#4ade80", borderRadius: "50%", border: "3px solid #0a0e1a" }} />
-              </div>
-              <h2 style={{ fontSize: "1.25rem", color: "#fff", marginBottom: "0.25rem" }}>{fullName}</h2>
-              <p style={{ color: "var(--on-surface-variant)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>{user?.email}</p>
-              
-              <div style={{ width: "100%", height: "1px", background: "rgba(68,71,86,0.2)", margin: "1rem 0" }} />
-              
-              <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontSize: "0.85rem", padding: "0.5rem 0" }}>
-                <span style={{ color: "var(--on-surface-variant)" }}>Account Status</span>
-                <span style={{ color: "#4ade80", fontWeight: 600 }}>Active</span>
-              </div>
-              <div style={{ width: "100%", display: "flex", justifyContent: "space-between", fontSize: "0.85rem", padding: "0.5rem 0" }}>
-                <span style={{ color: "var(--on-surface-variant)" }}>Auth Provider</span>
-                <span style={{ color: "#fff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <svg width="14" height="14" viewBox="0 0 48 48">
-                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
-                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
-                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
-                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
-                  </svg>
-                  Google
-                </span>
-              </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  onClick={() => setView("discover")}
+                  className={`btn-${view === "discover" ? "primary" : "secondary"}`}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  Discover
+                </button>
+                <button 
+                  onClick={() => setView("manage")}
+                  className={`btn-${view === "manage" ? "primary" : "secondary"}`}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  My Projects
+                </button>
             </div>
+        </div>
 
-            {/* Right Column - Workspaces & CLI */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-              {/* CLI Status Card */}
-              <div className="glass-card" style={{ padding: "2rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                  <h3 style={{ fontSize: "1.1rem", color: "#fff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="4 17 10 11 4 5"></polyline>
-                      <line x1="12" y1="19" x2="20" y2="19"></line>
-                    </svg>
-                    Terminal Link
-                  </h3>
-                  <span style={{ fontSize: "0.75rem", background: "rgba(102, 211, 255, 0.1)", color: "var(--primary)", padding: "0.3rem 0.8rem", borderRadius: "99px", fontWeight: 600 }}>Active Connection</span>
-                </div>
-                <p style={{ fontSize: "0.9rem", color: "var(--on-surface-variant)", marginBottom: "1.5rem" }}>
-                  Your web account is ready to accept commands from the Kyte CLI. You can now execute commands locally that will sync with this account.
-                </p>
-                <div style={{ background: "#0a0e1a", border: "1px solid rgba(123, 145, 195, 0.15)", borderRadius: "0.5rem", padding: "1rem", fontFamily: "monospace", fontSize: "0.85rem", color: "#a6badc" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#4ade80" }}>➜</span>
-                    <span style={{ color: "#66d3ff" }}>kyte</span>
-                    <span style={{ color: "#fff" }}>run --agent auto "Build my auth system"</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    <span style={{ color: "transparent" }}>➜</span>
-                    <span style={{ opacity: 0.7 }}>Agent connected and executing tasks...</span>
-                  </div>
-                </div>
-              </div>
+        {/* Discover View */}
+        {view === "discover" && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                <motion.div 
+                    whileHover={{ y: -5 }}
+                    className="glass-card" 
+                    style={{ padding: '2rem', border: '1px dashed rgba(102, 211, 255, 0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', cursor: 'pointer' }}
+                    onClick={handleCreateDemoProject}
+                >
+                    <div className="signin-card-icon" style={{ marginBottom: '1rem' }}>
+                        <Zap size={24} color="#66d3ff" />
+                    </div>
+                    <h3>Post New Project</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Lock funds in escrow and set requirements</p>
+                </motion.div>
 
-              {/* Recent Activity Card */}
-              <div className="glass-card" style={{ padding: "2rem" }}>
-                <h3 style={{ fontSize: "1.1rem", color: "#fff", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                  Recent Activity
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <div style={{ display: "flex", gap: "1rem", paddingBottom: "1rem", borderBottom: "1px solid rgba(68,71,86,0.15)" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "0.5rem", background: "rgba(102, 211, 255, 0.1)", color: "var(--primary)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <div>
-                      <p style={{ color: "#fff", fontSize: "0.9rem", fontWeight: 500 }}>Account created & verified</p>
-                      <p style={{ color: "var(--on-surface-variant)", fontSize: "0.8rem", marginTop: "0.2rem" }}>Just now via Google Auth</p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: "1rem" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "0.5rem", background: "rgba(255, 255, 255, 0.05)", color: "var(--on-surface-variant)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div>
-                      <p style={{ color: "var(--on-surface-variant)", fontSize: "0.9rem", fontWeight: 500 }}>Awaiting first CLI command</p>
-                      <p style={{ color: "rgba(166, 186, 220, 0.5)", fontSize: "0.8rem", marginTop: "0.2rem" }}>Run `kyte` in your terminal to begin</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                {projects.map((p, i) => (
+                    <motion.div 
+                        key={p.project_id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="glass-card" 
+                        style={{ padding: '1.5rem', position: 'relative' }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                            <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '4px', background: 'rgba(102, 211, 255, 0.1)', color: '#66d3ff' }}>
+                                OPEN
+                            </span>
+                            <span style={{ fontWeight: 700, color: '#66d3ff' }}>{p.payment_algo} ALGO</span>
+                        </div>
+                        <h3 style={{ marginBottom: '0.5rem' }}>{p.title}</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1.5rem', lineClamp: 2, overflow: 'hidden' }}>
+                            {p.description}
+                        </p>
+                        <button 
+                            className="btn-primary" 
+                            style={{ width: '100%', fontSize: '0.8rem' }}
+                            onClick={() => { setActiveProjectId(p.project_id); setView("details"); }}
+                        >
+                            View Details
+                        </button>
+                    </motion.div>
+                ))}
             </div>
-          </div>
-        </motion.div>
+        )}
+
+        {/* Details View */}
+        {view === "details" && activeProject && (
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+                <div>
+                    <button onClick={() => setView("discover")} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer' }}>
+                        ← Back to discover
+                    </button>
+                    <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>{activeProject.title}</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: '2rem' }}>{activeProject.description}</p>
+                    
+                    <div className="glass-card" style={{ padding: '2rem' }}>
+                        <h4 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                           <Shield size={18} color="#66d3ff" /> AI Enforcement Policy
+                        </h4>
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            {activeProject.requirements.map((req, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#66d3ff' }} />
+                                    <span style={{ fontSize: '0.95rem' }}>{req}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="glass-card" style={{ padding: '1.5rem' }}>
+                        <h4 style={{ marginBottom: '1rem' }}>Escrow Status</h4>
+                        <div style={{ padding: '1rem', background: 'rgba(74, 222, 128, 0.1)', borderRadius: '8px', border: '1px solid rgba(74, 222, 128, 0.2)', marginBottom: '1rem' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4ade80' }}>{activeProject.payment_algo} ALGO</div>
+                            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Locked on TestNet</div>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>
+                            App ID: {activeProject.app_id}
+                        </div>
+                    </div>
+
+                    <div className="glass-card" style={{ padding: '1.5rem' }}>
+                        <h4 style={{ marginBottom: '1rem' }}>Submit Work</h4>
+                        <div style={{ display: 'grid', gap: '0.75rem' }}>
+                            <div style={{ position: 'relative' }}>
+                                <Github style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} size={16} />
+                                <input 
+                                    className="signin-input" 
+                                    placeholder="GitHub URL" 
+                                    style={{ paddingLeft: '2.5rem', fontSize: '0.85rem' }} 
+                                    value={submissionUrl}
+                                    onChange={(e) => setSubmissionUrl(e.target.value)}
+                                />
+                            </div>
+                            <button 
+                                className="btn-primary" 
+                                disabled={evaluating || !submissionUrl}
+                                onClick={handleSubmit}
+                            >
+                                {evaluating ? "AI AUDITING..." : "SUBMIT FOR REVIEW"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Evaluation Results Overlay */}
+        <AnimatePresence>
+            {evaluating && (
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(6, 9, 18, 0.9)', zIndex: 100, display: 'grid', placeItems: 'center', backdropFilter: 'blur(10px)' }}
+                >
+                    <div style={{ textAlign: 'center' }}>
+                        <div className="signin-spinner" style={{ width: '60px', height: '60px', margin: '0 auto 2rem' }} />
+                        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Gemini 1.5 Flash Auditing...</h2>
+                        <p style={{ opacity: 0.6 }}>Scanning code against {activeProject?.requirements.length} requirements</p>
+                    </div>
+                </motion.div>
+            )}
+
+            {evaluation && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(6, 9, 18, 0.95)', zIndex: 101, display: 'grid', placeItems: 'center', padding: '2rem', overflowY: 'auto' }}
+                >
+                    <div className="glass-card" style={{ maxWidth: '800px', width: '100%', padding: '3rem', position: 'relative' }}>
+                        <button 
+                            onClick={() => setEvaluation(null)}
+                            style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
+                        >
+                            <XCircle size={24} opacity={0.5} />
+                        </button>
+
+                        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                            <div style={{ 
+                                width: '120px', height: '120px', borderRadius: '50%', border: `8px solid ${evaluation.overall_score >= 80 ? '#4ade80' : '#f87171'}`,
+                                display: 'grid', placeItems: 'center', margin: '0 auto 1.5rem', fontSize: '2.5rem', fontWeight: 900
+                            }}>
+                                {evaluation.overall_score}
+                            </div>
+                            <h2 style={{ fontSize: '2rem' }}>
+                                {evaluation.overall_score >= 80 ? "Audit Passed!" : "Audit Failed"}
+                            </h2>
+                            <p style={{ opacity: 0.6, marginTop: '0.5rem' }}>
+                                {evaluation.overall_score >= 80 ? "Payment scheduled for release" : "Requirements were not fully met"}
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '1rem', marginBottom: '3rem' }}>
+                            {evaluation.results.map((res, i) => (
+                                <div key={i} style={{ display: 'flex', gap: '1rem', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', alignItems: 'flex-start' }}>
+                                    {res.met ? <CheckCircle2 color="#4ade80" size={20} /> : <AlertCircle color="#f87171" size={20} />}
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                            <span style={{ fontWeight: 600 }}>{res.requirement}</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{res.score}/100</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.85rem', opacity: 0.6 }}>{res.reason}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {evaluation.gap_report && (
+                            <div style={{ padding: '1.5rem', background: 'rgba(248, 113, 113, 0.1)', borderRadius: '12px', border: '1px solid rgba(248, 113, 113, 0.2)' }}>
+                                <h4 style={{ color: '#f87171', marginBottom: '0.5rem' }}>Gap Report</h4>
+                                <p style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>{evaluation.gap_report}</p>
+                            </div>
+                        )}
+
+                        <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem' }}>
+                            {evaluation.overall_score >= 80 ? (
+                                <button className="btn-primary" style={{ flex: 1 }} onClick={() => setEvaluation(null)}>
+                                    RECOVER PAYMENT
+                                </button>
+                            ) : (
+                                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setEvaluation(null)}>
+                                    REVISE SUBMISSION
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+
       </main>
 
       <Footer />
