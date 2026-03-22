@@ -1,0 +1,71 @@
+# MedTriageSLM — Smolify Training Configuration
+# Upload to: https://smolify.ai/train
+# Base model: HuggingFaceTB/SmolLM2-360M-Instruct
+
+model:
+  base: "HuggingFaceTB/SmolLM2-360M-Instruct"
+  output_name: "medtriage-smollm2-360m"
+
+dataset:
+  # Replace with your HF dataset link after uploading via Smolify
+  path: "YOUR_USERNAME/medtriage-synthetic"
+  format: "instruction_input_output"
+  # Field mapping
+  instruction_field: "instruction"
+  input_field: "input"
+  output_field: "output"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+training:
+  method: "sft"                  # Supervised Fine-Tuning
+  epochs: 3
+  batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 2e-4
+  lr_scheduler: "cosine"
+  warmup_ratio: 0.05
+  max_seq_length: 512
+  weight_decay: 0.01
+
+peft:
+  method: "lora"
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "o_proj"
+
+# Output format enforcement (critical for JSON schema compliance)
+output_format:
+  enforce_json: true
+  schema_validation: true
+  required_fields:
+    - urgency
+    - confidence
+    - esi_level
+    - reasoning
+    - recommended_action
+    - red_flags
+    - do_not_send_home
+
+evaluation:
+  metrics:
+    - accuracy
+    - schema_compliance_rate    # % of outputs that parse as valid JSON
+    - urgency_f1                # Per-class F1 for triage levels
+    - do_not_send_home_recall   # Most safety-critical metric
+  target_schema_compliance: 0.97
+  target_urgency_accuracy: 0.85
+
+export:
+  push_to_hub: true
+  hub_model_id: "YOUR_USERNAME/medtriage-smollm2-360m"
+  formats:
+    - "safetensors"
+    - "gguf"          # For WASM/WebLLM deployment
+    - "onnx"          # For FastAPI fallback
