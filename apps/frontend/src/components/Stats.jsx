@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import React from 'react'
 
 export default function Stats() {
@@ -7,10 +7,10 @@ export default function Stats() {
       <div className="container">
         <p className="section-label" style={{textAlign:'center', color:'#0066ff'}}>Our Impact</p>
         <div className="stats-quote">
-          "We believe that technology can{' '}
+          &ldquo;We believe that technology can{' '}
           <span style={{background:'linear-gradient(135deg,#00c9ff,#0066ff)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text'}}>
             change the world.
-          </span>"
+          </span>&rdquo;
         </div>
         <div className="stats-grid">
           <div className="stat-item">

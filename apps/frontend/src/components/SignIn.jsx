@@ -1,6 +1,7 @@
-"use client"
+﻿"use client"
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Shield } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +15,7 @@ export default function SignIn() {
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
     };
+
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
@@ -21,24 +23,26 @@ export default function SignIn() {
   const handleGoogleSignIn = async () => {
     setErrorMessage('');
     setIsLoading(true);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`
-      }
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
+
     if (error) {
       console.error('Error signing in:', error.message);
       setErrorMessage(error.message || 'Unable to sign in. Please try again.');
       setIsLoading(false);
       return;
     }
+
     setIsLoading(false);
   };
 
   return (
     <div className="signin-page">
-      {/* Dynamic cursor glow */}
       <div
         className="signin-cursor-glow"
         style={{
@@ -47,25 +51,18 @@ export default function SignIn() {
         }}
       />
 
-      {/* Ambient background orbs */}
       <div className="signin-orb signin-orb-1" />
       <div className="signin-orb signin-orb-2" />
       <div className="signin-orb signin-orb-3" />
-
-      {/* Dot grid overlay */}
       <div className="signin-dot-grid" />
 
-      {/* Split layout */}
       <div className="signin-layout">
-
-        {/* ── Left Panel ── */}
         <motion.div
           className="signin-left"
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          {/* Brand */}
           <div className="signin-brand">
             <div className="signin-brand-mark">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -84,7 +81,6 @@ export default function SignIn() {
             </span>
           </div>
 
-          {/* Headline */}
           <div className="signin-left-content">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -98,11 +94,10 @@ export default function SignIn() {
                 <span className="signin-gradient-text">perfectly secured.</span>
               </h1>
               <p className="signin-hero-sub">
-                AI-powered proctoring, real-time analytics, and seamless candidate management — all in one platform.
+                AI-powered proctoring, real-time analytics, and seamless candidate management - all in one platform.
               </p>
             </motion.div>
 
-            {/* Feature pills */}
             <motion.div
               className="signin-features"
               initial={{ opacity: 0, y: 20 }}
@@ -110,18 +105,17 @@ export default function SignIn() {
               transition={{ delay: 0.4, duration: 0.7 }}
             >
               {[
-                { icon: '🛡️', label: 'AI Proctoring' },
-                { icon: '📊', label: 'Live Analytics' },
-                { icon: '🔐', label: 'Zero Trust Security' },
-              ].map((f, i) => (
-                <div key={i} className="signin-feature-pill">
-                  <span>{f.icon}</span>
-                  <span>{f.label}</span>
+                { icon: 'AI', label: 'AI Proctoring' },
+                { icon: 'Live', label: 'Live Analytics' },
+                { icon: 'Zero', label: 'Zero Trust Security' },
+              ].map((feature, index) => (
+                <div key={index} className="signin-feature-pill">
+                  <span>{feature.icon}</span>
+                  <span>{feature.label}</span>
                 </div>
               ))}
             </motion.div>
 
-            {/* Floating stat cards */}
             <motion.div
               className="signin-stats-row"
               initial={{ opacity: 0 }}
@@ -131,18 +125,17 @@ export default function SignIn() {
               {[
                 { num: '50K+', lbl: 'Exams Conducted' },
                 { num: '99.9%', lbl: 'Uptime SLA' },
-                { num: '4.9★', lbl: 'User Rating' },
-              ].map((s, i) => (
-                <div key={i} className="signin-stat-chip">
-                  <span className="signin-stat-num">{s.num}</span>
-                  <span className="signin-stat-lbl">{s.lbl}</span>
+                { num: '4.9/5', lbl: 'User Rating' },
+              ].map((stat, index) => (
+                <div key={index} className="signin-stat-chip">
+                  <span className="signin-stat-num">{stat.num}</span>
+                  <span className="signin-stat-lbl">{stat.lbl}</span>
                 </div>
               ))}
             </motion.div>
           </div>
         </motion.div>
 
-        {/* ── Right Panel (Card) ── */}
         <div className="signin-right">
           <motion.div
             className="signin-card"
@@ -150,7 +143,6 @@ export default function SignIn() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
           >
-            {/* Back button */}
             <button
               className="signin-back-btn"
               onClick={() => router.push('/')}
@@ -162,7 +154,6 @@ export default function SignIn() {
               <span>Back</span>
             </button>
 
-            {/* Card Header */}
             <div className="signin-card-header">
               <div className="signin-card-icon">
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -180,19 +171,27 @@ export default function SignIn() {
               <p className="signin-card-subtitle">Sign in to your Optivus Kyte account</p>
             </div>
 
-            {/* Divider */}
             <div className="signin-divider">
               <span>Continue with</span>
             </div>
 
-            {/* Pera Wallet Button */}
             <motion.button
               className="btn-primary"
               onClick={() => {
-                const navBtn = document.querySelector('.navbar .btn-signin')
+                const navBtn = document.querySelector('.navbar .btn-signin');
                 if (navBtn) navBtn.click();
               }}
-              style={{ width: '100%', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', background: 'linear-gradient(135deg, #1d976c 0%, #93f9b9 100%)', color: '#000', fontWeight: 600 }}
+              style={{
+                width: '100%',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                background: 'linear-gradient(135deg, #1d976c 0%, #93f9b9 100%)',
+                color: '#000',
+                fontWeight: 600,
+              }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -200,7 +199,6 @@ export default function SignIn() {
               <span>Connect Pera Wallet</span>
             </motion.button>
 
-            {/* Google Button */}
             <motion.button
               className="signin-google-btn"
               onClick={handleGoogleSignIn}
@@ -241,7 +239,6 @@ export default function SignIn() {
               <p className="signin-error-message" role="alert">{errorMessage}</p>
             ) : null}
 
-            {/* Security note */}
             <div className="signin-security-note">
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                 <path d="M8 1.5L2 4V8.5C2 11.8 4.6 14.9 8 15.5C11.4 14.9 14 11.8 14 8.5V4L8 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
@@ -250,7 +247,6 @@ export default function SignIn() {
               <span>Secured with OAuth 2.0 &amp; end-to-end encryption</span>
             </div>
 
-            {/* Terms */}
             <p className="signin-terms">
               By continuing, you agree to our{' '}
               <a href="#" className="signin-link">Terms of Service</a>
@@ -262,6 +258,4 @@ export default function SignIn() {
       </div>
     </div>
   );
-};
-
-
+}

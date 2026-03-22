@@ -2,7 +2,7 @@ from algosdk import account, mnemonic, v2client
 from algosdk.transaction import ApplicationNoOpTxn, wait_for_confirmation
 import base64
 
-class CodePactContract:
+class KyteContract:
     def __init__(self, algod_token, algod_address):
         self.client = v2client.algod.AlgodClient(algod_token, algod_address)
 

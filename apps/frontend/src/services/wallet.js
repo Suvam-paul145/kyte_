@@ -1,5 +1,4 @@
 import { PeraWalletConnect } from "@perawallet/connect";
-import algosdk from "algosdk";
 
 const peraWallet = new PeraWalletConnect();
 
@@ -44,7 +43,7 @@ export const signAuthNonce = async (address, nonce) => {
     try {
         // Sign with Pera Wallet
         // signData uses a specific format for signing
-        const result = await peraWallet.signData([{ data, message: "Sign this nonce to authenticate with CodePact" }], address);
+        const result = await peraWallet.signData([{ data, message: "Sign this nonce to authenticate with Kyte" }], address);
         return result[0]; // This is the signature
     } catch (e) {
         console.log("Signing error", e);

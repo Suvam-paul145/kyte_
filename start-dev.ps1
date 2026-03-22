@@ -66,9 +66,17 @@ $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendDir = Join-Path $repoRoot "apps\backend"
 $frontendDir = Join-Path $repoRoot "apps\frontend"
 
-$backendVenvPython = Join-Path $backendDir ".venv\Scripts\python.exe"
-$backendInstall = "if (!(Test-Path '.venv\Scripts\python.exe')) { python -m venv .venv }; .\.venv\Scripts\python.exe -m pip install -r requirements.txt"
-$backendRun = ".\.venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000"
+$backendVenvPython = Join-Path $backendDir ".venv_stable\Scripts\python.exe"
+
+# Use 'py -3.12' if available to avoid Python 3.14 compatibility issues, otherwise fallback to 'python'
+$pythonCmd = "python"
+if (Get-Command "py" -ErrorAction SilentlyContinue) {
+    $ver = py --list | Select-String "3.12"
+    if ($ver) { $pythonCmd = "py -3.12" }
+}
+
+$backendInstall = "if (!(Test-Path '.venv_stable\Scripts\python.exe')) { $pythonCmd -m venv .venv_stable }; .\.venv_stable\Scripts\python.exe -m pip install -r requirements.txt"
+$backendRun = ".\.venv_stable\Scripts\python.exe -m uvicorn main:app --reload --port 8000"
 $frontendInstallAndRun = "npm install; npm run dev"
 
 Write-Host "Booting KYTE backend + frontend..." -ForegroundColor Green

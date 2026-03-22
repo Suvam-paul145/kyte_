@@ -5,6 +5,7 @@ from config import settings
 from routers.auth import router as auth_router
 from routers.evaluation import router as evaluation_router
 from routers.projects import router as projects_router
+from routers.agent import router as agent_router
 
 app = FastAPI(
     title="KYTE Foundations API",
@@ -23,6 +24,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(projects_router, tags=["projects"])
 app.include_router(evaluation_router, tags=["evaluation"])
+app.include_router(agent_router, prefix="/agent", tags=["agent"])
 
 
 @app.get("/health")

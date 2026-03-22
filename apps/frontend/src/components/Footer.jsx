@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import React from 'react'
 
 export default function Footer() {
@@ -6,22 +6,20 @@ export default function Footer() {
 
   return (
     <>
-      {/* CTA Banner */}
       <section className="cta-banner">
         <div className="container">
           <div className="cta-banner-inner">
             <div>
               <p className="section-label">Ready to Start?</p>
-              <h2>Need IT Solutions?<br /><span>Let's start now.</span></h2>
+              <h2>Need IT Solutions?<br /><span>Let&apos;s start now.</span></h2>
             </div>
             <a href="#contact" className="btn-primary" style={{fontSize:'1rem', padding:'1rem 2.5rem'}}>
-              Get in Touch →
+              Get in Touch -&gt;
             </a>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="footer">
         <div className="container">
           <div className="footer-top">
@@ -32,11 +30,11 @@ export default function Footer() {
                   WAVE IT
                 </span>
               </div>
-              <p>Next-generation IT solutions for the digital era. Building tomorrow's infrastructure, today.</p>
+              <p>Next-generation IT solutions for the digital era. Building tomorrow&apos;s infrastructure, today.</p>
               <div className="footer-social">
                 {['f', 't', 'in', 'yt'].map((s, i) => (
                   <a key={i} href="#" className="social-icon" aria-label={`Social ${s}`}>
-                    {s === 'f' ? '📘' : s === 't' ? '🐦' : s === 'in' ? '💼' : '▶️'}
+                    {s === 'f' ? 'FB' : s === 't' ? 'X' : s === 'in' ? 'IN' : 'YT'}
                   </a>
                 ))}
               </div>
@@ -72,7 +70,7 @@ export default function Footer() {
           </div>
 
           <div className="footer-bottom">
-            <p>© {year} Optivus Kyte / WAVE IT. All rights reserved.</p>
+            <p>&copy; {year} Optivus Kyte / WAVE IT. All rights reserved.</p>
             <div style={{display:'flex', gap:'2rem'}}>
               <a href="#" style={{fontSize:'0.8rem', color:'#a7aabb'}}>Privacy Policy</a>
               <a href="#" style={{fontSize:'0.8rem', color:'#a7aabb'}}>Terms of Service</a>

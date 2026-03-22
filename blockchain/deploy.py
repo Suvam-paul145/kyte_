@@ -1,7 +1,7 @@
 import base64
 from algosdk import account, mnemonic, v2client
 from algosdk.transaction import ApplicationCreateTxn, StateSchema, PaymentTxn, wait_for_confirmation
-from contracts.codepact import approval_program
+from contracts.kyte import approval_program
 from contracts.clear_state import clear_state_program
 from pyteal import compileTeal, Mode
 
@@ -60,4 +60,4 @@ if __name__ == "__main__":
     # app_args = [ (3000000).to_bytes(8, 'big') ] # 3 ALGO in microALGO
     
     # app_id = deploy_contract(client, private_key, approval_teal, clear_teal, global_schema, local_schema, app_args)
-    # print(f"Deployed CodePact with App ID: {app_id}")
+    # print(f"Deployed Kyte with App ID: {app_id}")

@@ -1,22 +1,17 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import useStore from "../store/useStore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import {
   createProject,
-  getProjectReport,
-  getProjectStatus,
   submitProject,
 } from "../services/kyteApi";
-import { CheckCircle2, XCircle, AlertCircle, Github, ExternalLink, Zap, Shield, Search } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Github, Zap, Shield } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function Dashboard() {
-  const router = useRouter();
   const { walletAddress, jwtToken } = useStore();
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -127,12 +122,12 @@ export default function Dashboard() {
                     whileHover={{ y: -5 }}
                     className="glass-card" 
                     style={{ padding: '2rem', border: '1px dashed rgba(102, 211, 255, 0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', cursor: 'pointer' }}
-                    onClick={handleCreateDemoProject}
+                    onClick={loading ? undefined : handleCreateDemoProject}
                 >
                     <div className="signin-card-icon" style={{ marginBottom: '1rem' }}>
                         <Zap size={24} color="#66d3ff" />
                     </div>
-                    <h3>Post New Project</h3>
+                    <h3>{loading ? "Creating Project..." : "Post New Project"}</h3>
                     <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>Lock funds in escrow and set requirements</p>
                 </motion.div>
 

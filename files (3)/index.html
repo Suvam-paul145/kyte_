@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedTriageSLM — On-Device Medical Triage</title>
+<style>
+  :root {
+    --emergency: #dc2626; --emergency-bg: #fef2f2; --emergency-border: #fca5a5;
+    --urgent:    #d97706; --urgent-bg:    #fffbeb; --urgent-border:    #fcd34d;
+    --semi:      #2563eb; --semi-bg:      #eff6ff; --semi-border:      #93c5fd;
+    --non:       #16a34a; --non-bg:       #f0fdf4; --non-border:       #86efac;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-400: #9ca3af; --gray-600: #4b5563; --gray-900: #111827;
+    --radius: 12px; --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font); background: var(--gray-50);
+    color: var(--gray-900); min-height: 100vh;
+  }
+  header {
+    background: #0f172a; color: white;
+    padding: 16px 24px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid #1e293b;
+  }
+  .logo {
+    width: 36px; height: 36px; border-radius: 8px; background: #dc2626;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+  }
+  .header-text h1 { font-size: 18px; font-weight: 600; }
+  .header-text p { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .badge {
+    margin-left: auto; font-size: 11px; padding: 4px 10px;
+    background: #0ea5e9; border-radius: 20px; font-weight: 500;
+  }
+  main { max-width: 800px; margin: 0 auto; padding: 32px 20px; }
+
+  /* Model status bar */
+  #status-bar {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #94a3b8; flex-shrink: 0; transition: background 0.3s;
+  }
+  .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
+  .status-dot.ready   { background: #22c55e; }
+  .status-dot.error   { background: #ef4444; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  #status-text { font-size: 13px; color: var(--gray-600); flex: 1; }
+  #progress-bar {
+    width: 100%; height: 4px; background: var(--gray-100);
+    border-radius: 2px; overflow: hidden; margin-top: 8px; display: none;
+  }
+  #progress-fill {
+    height: 100%; background: #3b82f6; border-radius: 2px;
+    transition: width 0.3s; width: 0%;
+  }
+
+  /* Input section */
+  .input-card {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius); padding: 20px;
+  }
+  label { font-size: 13px; font-weight: 500; color: var(--gray-600); display: block; margin-bottom: 8px; }
+  textarea {
+    width: 100%; height: 110px; resize: vertical;
+    border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px 14px;
+    font-family: var(--font); font-size: 14px; color: var(--gray-900);
+    outline: none; transition: border 0.2s;
+    background: var(--gray-50);
+  }
+  textarea:focus { border-color: #3b82f6; background: white; }
+  .input-actions {
+    display: flex; gap: 10px; margin-top: 12px; align-items: center;
+  }
+  button {
+    font-family: var(--font); cursor: pointer; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.15s;
+  }
+  #triage-btn {
+    background: #0f172a; color: white; padding: 10px 20px; flex: 1;
+  }
+  #triage-btn:hover:not(:disabled) { background: #1e293b; }
+  #triage-btn:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
+  #clear-btn {
+    background: var(--gray-100); color: var(--gray-600); padding: 10px 16px;
+  }
+  #clear-btn:hover { background: var(--gray-200); }
+
+  /* Example chips */
+  .examples {
+    margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .ex-label { font-size: 11px; color: var(--gray-400); width: 100%; }
+  .chip {
+    font-size: 11px; padding: 5px 10px; border-radius: 20px;
+    border: 1px solid var(--gray-200); background: white;
+    cursor: pointer; color: var(--gray-600); transition: all 0.15s;
+  }
+  .chip:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+  .chip.emergency { border-color: #fca5a5; color: var(--emergency); background: #fef2f2; }
+  .chip.urgent    { border-color: #fcd34d; color: var(--urgent); background: #fffbeb; }
+  .chip.semi      { border-color: #93c5fd; color: var(--semi); background: #eff6ff; }
+  .chip.non       { border-color: #86efac; color: var(--non); background: #f0fdf4; }
+
+  /* Result card */
+  #result-card { display: none; margin-top: 24px; }
+  .triage-header {
+    border-radius: var(--radius) var(--radius) 0 0; padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .urgency-badge {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+  }
+  .esi-circle {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; border: 2px solid rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.2); color: white; flex-shrink: 0;
+  }
+  .confidence-bar-wrap { flex: 1; }
+  .conf-label { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+  .confidence-bar {
+    height: 6px; border-radius: 3px; background: rgba(255,255,255,0.3);
+    overflow: hidden;
+  }
+  .confidence-fill {
+    height: 100%; border-radius: 3px;
+    background: white; transition: width 1s ease;
+  }
+  .conf-value { font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+  .triage-body {
+    background: white; border: 1px solid var(--gray-200);
+    border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 20px 24px;
+  }
+  .detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .detail-box {
+    background: var(--gray-50); border-radius: 8px; padding: 14px;
+    border: 1px solid var(--gray-100);
+  }
+  .detail-box .detail-label { font-size: 11px; color: var(--gray-400); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .detail-box .detail-value { font-size: 14px; color: var(--gray-900); line-height: 1.5; }
+  .full-width { grid-column: 1 / -1; }
+  .red-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .flag-chip {
+    font-size: 11px; padding: 3px 8px; border-radius: 4px;
+    background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;
+  }
+  .dnsh-banner {
+    margin-top: 16px; padding: 12px 16px; border-radius: 8px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600;
+  }
+  .dnsh-banner.warn {
+    background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
+  }
+  .dnsh-banner.ok {
+    background: #f0fdf4; border: 1px solid #86efac; color: #166534;
+  }
+  .disclaimer {
+    margin-top: 24px; font-size: 11px; color: var(--gray-400);
+    text-align: center; padding: 0 20px; line-height: 1.6;
+  }
+  .thinking-dots span {
+    display: inline-block; animation: dot 1.2s infinite;
+    font-size: 20px; margin: 0 2px;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dot { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">M</div>
+  <div class="header-text">
+    <h1>MedTriageSLM</h1>
+    <p>On-device medical triage · Patient data never leaves this browser</p>
+  </div>
+  <div class="badge">WebLLM · WASM</div>
+</header>
+
+<main>
+
+  <div id="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <div style="flex:1">
+      <div id="status-text">Initialising on-device model...</div>
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <div class="input-card">
+    <label for="symptom-input">Patient symptom description</label>
+    <textarea id="symptom-input"
+      placeholder="Describe patient symptoms in natural language. Example: 65 year old male, sudden severe chest pain radiating to left arm, sweating, shortness of breath..."
+    ></textarea>
+
+    <div class="input-actions">
+      <button id="triage-btn" disabled onclick="runTriage()">
+        Run Triage Assessment
+      </button>
+      <button id="clear-btn" onclick="clearAll()">Clear</button>
+    </div>
+
+    <div class="examples">
+      <span class="ex-label">Quick examples:</span>
+      <span class="chip emergency" onclick="setExample(0)">Chest pain + sweating</span>
+      <span class="chip urgent"    onclick="setExample(1)">Child fever 40°C</span>
+      <span class="chip semi"      onclick="setExample(2)">Ear infection</span>
+      <span class="chip non"       onclick="setExample(3)">Sore throat, no fever</span>
+    </div>
+  </div>
+
+  <div id="result-card">
+    <div class="triage-header" id="triage-header">
+      <div class="esi-circle" id="esi-circle"></div>
+      <div>
+        <div class="urgency-badge" id="urgency-badge"></div>
+        <div style="font-size:12px;opacity:0.85;margin-top:3px">Emergency Severity Index Level <span id="esi-level-text"></span></div>
+      </div>
+      <div class="confidence-bar-wrap">
+        <div class="conf-label">Model confidence</div>
+        <div class="confidence-bar"><div class="confidence-fill" id="conf-fill"></div></div>
+        <div class="conf-value" id="conf-value"></div>
+      </div>
+    </div>
+    <div class="triage-body">
+      <div class="detail-row">
+        <div class="detail-box full-width">
+          <div class="detail-label">Clinical reasoning</div>
+          <div class="detail-value" id="reasoning-text"></div>
+        </div>
+        <div class="detail-box full-width">
+          <div class="detail-label">Recommended action</div>
+          <div class="detail-value" id="action-text"></div>
+        </div>
+        <div class="detail-box" id="flags-box">
+          <div class="detail-label">Red flags detected</div>
+          <div class="red-flags" id="flags-list"></div>
+        </div>
+      </div>
+      <div class="dnsh-banner" id="dnsh-banner"></div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ This is a proof-of-concept AI system. Not a certified medical device.
+    All triage decisions must be reviewed by qualified clinical staff.
+    Patient data never leaves this device — inference runs 100% locally via WebAssembly.
+  </div>
+
+</main>
+
+<script>
+const EXAMPLES = [
+  "65 year old male, sudden severe chest pain radiating to left arm, started 20 minutes ago, sweating profusely, shortness of breath.",
+  "3 year old child, fever 40.1°C since last night, very irritable, not drinking, rash on torso.",
+  "Child aged 7, ear pain and discharge for 3 days, fever 38.0°C, otherwise well.",
+  "Adult, mild sore throat for 2 days, no fever, no difficulty swallowing, no drooling."
+];
+
+const COLORS = {
+  EMERGENCY: { bg:'#991b1b', text:'white', headerBg:'#dc2626' },
+  URGENT:    { bg:'#92400e', text:'white', headerBg:'#d97706' },
+  SEMI_URGENT:{ bg:'#1e40af', text:'white', headerBg:'#2563eb' },
+  NON_URGENT: { bg:'#14532d', text:'white', headerBg:'#16a34a' }
+};
+
+let worker = null;
+let modelReady = false;
+
+function initWorker() {
+  worker = new Worker('worker.js');
+  worker.onmessage = handleWorkerMessage;
+  worker.postMessage({ type: 'load' });
+  setStatus('loading', 'Loading SmolLM2-360M to your device...');
+}
+
+function handleWorkerMessage(e) {
+  const { type, progress, message, data, fallback } = e.data;
+
+  if (type === 'loading') {
+    setStatus('loading', message);
+    document.getElementById('progress-bar').style.display = 'block';
+    document.getElementById('progress-fill').style.width = progress + '%';
+  }
+  else if (type === 'ready') {
+    modelReady = true;
+    setStatus('ready', 'On-device model ready. No data leaves this browser.');
+    document.getElementById('progress-bar').style.display = 'none';
+    document.getElementById('triage-btn').disabled = false;
+  }
+  else if (type === 'thinking') {
+    document.getElementById('triage-btn').disabled = true;
+    document.getElementById('triage-btn').innerHTML =
+      '<span class="thinking-dots"><span>·</span><span>·</span><span>·</span></span> Analysing...';
+  }
+  else if (type === 'result') {
+    showResult(data);
+    resetBtn();
+  }
+  else if (type === 'error') {
+    console.warn('Inference error:', message);
+    if (fallback) showResult(fallback);
+    else setStatus('error', 'Inference failed. Please try again.');
+    resetBtn();
+  }
+}
+
+function setStatus(state, text) {
+  document.getElementById('status-dot').className = 'status-dot ' + state;
+  document.getElementById('status-text').textContent = text;
+}
+
+function resetBtn() {
+  const btn = document.getElementById('triage-btn');
+  btn.disabled = false;
+  btn.textContent = 'Run Triage Assessment';
+}
+
+function setExample(idx) {
+  document.getElementById('symptom-input').value = EXAMPLES[idx];
+}
+
+function clearAll() {
+  document.getElementById('symptom-input').value = '';
+  document.getElementById('result-card').style.display = 'none';
+}
+
+function runTriage() {
+  const symptom = document.getElementById('symptom-input').value.trim();
+  if (!symptom) { alert('Please enter patient symptoms first.'); return; }
+  if (!modelReady) { alert('Model is still loading. Please wait.'); return; }
+  worker.postMessage({ type: 'triage', symptom });
+}
+
+function showResult(data) {
+  const urgency = data.urgency || 'NON_URGENT';
+  const colors = COLORS[urgency] || COLORS.NON_URGENT;
+  const confidence = Math.round((data.confidence || 0.5) * 100);
+
+  const header = document.getElementById('triage-header');
+  header.style.background = colors.headerBg;
+  header.style.color = colors.text;
+
+  document.getElementById('esi-circle').textContent = data.esi_level || '?';
+  document.getElementById('urgency-badge').textContent = urgency.replace('_', '-');
+  document.getElementById('esi-level-text').textContent = data.esi_level || '?';
+  document.getElementById('conf-fill').style.width = confidence + '%';
+  document.getElementById('conf-value').textContent = confidence + '%';
+
+  document.getElementById('reasoning-text').textContent = data.reasoning || '—';
+  document.getElementById('action-text').textContent = data.recommended_action || '—';
+
+  const flagsList = document.getElementById('flags-list');
+  flagsList.innerHTML = '';
+  const flags = data.red_flags || [];
+  if (flags.length > 0) {
+    flags.forEach(f => {
+      const chip = document.createElement('span');
+      chip.className = 'flag-chip';
+      chip.textContent = f.replace(/_/g, ' ');
+      flagsList.appendChild(chip);
+    });
+    document.getElementById('flags-box').style.display = '';
+  } else {
+    document.getElementById('flags-box').style.display = 'none';
+  }
+
+  const banner = document.getElementById('dnsh-banner');
+  if (data.do_not_send_home) {
+    banner.className = 'dnsh-banner warn';
+    banner.innerHTML = '⛔ DO NOT SEND HOME — Patient requires in-hospital assessment';
+  } else {
+    banner.className = 'dnsh-banner ok';
+    banner.innerHTML = '✓ May be suitable for primary care or GP follow-up';
+  }
+
+  if (data._is_fallback) {
+    banner.innerHTML += ' <em style="font-weight:400">(rule-based fallback)</em>';
+  }
+
+  document.getElementById('result-card').style.display = 'block';
+  document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Start loading the model when the page loads
+window.addEventListener('DOMContentLoaded', initWorker);
+
+// Allow Enter key in textarea to trigger triage (Shift+Enter for newline)
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('symptom-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!document.getElementById('triage-btn').disabled) runTriage();
+    }
+  });
+});
+</script>
+</body>
+</html>

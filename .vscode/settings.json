@@ -1,4 +1,12 @@
 {
+  // ── Python LSP ──────────────────────────────────────────────────────────
+  // Pyrefly (Meta's Rust-based type checker) crashes on this project.
+  // Disabling it and using Pylance (ms-python) instead.
+  "pyrefly.enabled": false,
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+
+  // ── Deno ────────────────────────────────────────────────────────────────
   "deno.enablePaths": [
     "supabase/functions"
   ],
