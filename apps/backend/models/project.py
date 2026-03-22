@@ -13,6 +13,8 @@ class ProjectCreateRequest(BaseModel):
     requirements: list[str] = Field(min_length=1)
     payment_algo: float = Field(gt=0)
     score_threshold: int = Field(default=80, ge=1, le=100)
+    # Optional: real on-chain app_id deployed via Pera Wallet by the client
+    app_id: int | None = Field(default=None, description="Algorand app ID if already deployed on-chain via Pera Wallet")
 
 
 class ProjectRecord(BaseModel):

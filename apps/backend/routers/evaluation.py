@@ -1,8 +1,9 @@
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from config import settings
 from dependencies import require_dev
-from models.evaluation import ReportRecord, SubmitRequest
+from models.evaluation import EvaluationResult, ReportRecord, SubmitRequest
 from services.algorand import algorand_service
 from services.gemini import gemini_service
 from services.repository import repository
@@ -31,12 +32,33 @@ async def submit_work(request: SubmitRequest, payload: dict = Depends(require_de
         status="in_review",
     )
 
-    try:
-        content = await fetch_submission_content(request.submission_url)
-    except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not fetch submission URL") from exc
+    # Instead of local mock evaluation, call the Supabase Edge Function
+    edge_function_url = f"{settings.supabase_url}/functions/v1/gemini-audit"
+    headers = {
+        "Authorization": f"Bearer {settings.supabase_anon_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "action": "submit",
+        "geminiApiKey": "dummy",  # Backend can use a dummy if the Edge Function has a secret, or pass from frontend
+        "data": {
+            "projectId": str(project.project_id),
+            "githubUrl": request.submission_url
+        }
+    }
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(edge_function_url, json=payload, headers=headers)
+        if response.status_code != 200:
+            error_data = response.json()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail=f"Edge Function error: {error_data.get('error', 'Unknown error')}"
+            )
+        result_data = response.json()
+        # Edge function returns the project record, we need the evaluation_result part
+        result = EvaluationResult(**result_data["evaluation_result"])
 
-    result = await gemini_service.evaluate(project.requirements, content)
     tx_score = algorand_service.post_score(project.app_id, result.overall_score)
     payment_released = False
     tx_release = None

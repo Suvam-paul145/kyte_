@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from routers.auth import router as auth_router
+from routers.blockchain import router as blockchain_router
 from routers.evaluation import router as evaluation_router
 from routers.projects import router as projects_router
 
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(blockchain_router, tags=["blockchain"])
 app.include_router(projects_router, tags=["projects"])
 app.include_router(evaluation_router, tags=["evaluation"])
 
