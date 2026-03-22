@@ -1,0 +1,82 @@
+/* ============================================================
+   KYTE — LUMINAL FRONTIER UI
+   Design Token System · v1.0
+   ============================================================ */
+
+:root {
+  /* ── Spatial ───────────────────────────────────────────── */
+  --void:        #04040A;   /* deepest bg — canvas */
+  --abyss:       #07070F;   /* page bg */
+  --depth-1:     #0C0C1A;   /* panel / card bg */
+  --depth-2:     #111124;   /* elevated card */
+  --depth-3:     #161630;   /* hover state */
+  --surface:     #1A1A38;   /* interactive surface */
+  --overlay:     rgba(4, 4, 10, 0.72);
+
+  /* ── Luminance (borders / dividers) ───────────────────── */
+  --rim-faint:   rgba(255,255,255,0.04);
+  --rim-soft:    rgba(255,255,255,0.08);
+  --rim-mid:     rgba(255,255,255,0.12);
+  --rim-bright:  rgba(255,255,255,0.20);
+
+  /* ── Accent Spectrum ───────────────────────────────────── */
+  --cyan:        #00D4FF;
+  --cyan-dim:    rgba(0,212,255,0.15);
+  --cyan-glow:   rgba(0,212,255,0.08);
+  --pulse:       #0AF5FF;
+
+  --violet:      #8B5CF6;
+  --violet-dim:  rgba(139,92,246,0.15);
+  --violet-glow: rgba(139,92,246,0.08);
+
+  --emerald:     #00E87A;
+  --emerald-dim: rgba(0,232,122,0.15);
+  --emerald-glow:rgba(0,232,122,0.08);
+
+  --amber:       #F59E0B;
+  --amber-dim:   rgba(245,158,11,0.15);
+
+  --crimson:     #FF3D71;
+  --crimson-dim: rgba(255,61,113,0.15);
+
+  /* ── Text ──────────────────────────────────────────────── */
+  --text-primary:   #F0F0FF;
+  --text-secondary: rgba(240,240,255,0.60);
+  --text-muted:     rgba(240,240,255,0.35);
+  --text-ghost:     rgba(240,240,255,0.18);
+  --text-code:      #7DFFD8;
+
+  /* ── Typography ────────────────────────────────────────── */
+  --font-display: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+  --font-body:    'DM Sans', 'Space Grotesk', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* ── Radius ─────────────────────────────────────────────  */
+  --r-sm:  6px;
+  --r-md:  10px;
+  --r-lg:  16px;
+  --r-xl:  22px;
+  --r-pill: 999px;
+
+  /* ── Shadow ─────────────────────────────────────────────  */
+  --shadow-card:   0 0 0 1px var(--rim-soft), 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow-c: 0 0 24px rgba(0,212,255,0.18), 0 0 48px rgba(0,212,255,0.08);
+  --shadow-glow-v: 0 0 24px rgba(139,92,246,0.18), 0 0 48px rgba(139,92,246,0.08);
+  --shadow-glow-e: 0 0 24px rgba(0,232,122,0.18), 0 0 48px rgba(0,232,122,0.08);
+
+  /* ── Motion ─────────────────────────────────────────────  */
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in:   cubic-bezier(0.64, 0, 0.78, 0);
+  --ease-snap: cubic-bezier(0.19, 1, 0.22, 1);
+
+  /* ── Spacing ─────────────────────────────────────────────  */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+}
