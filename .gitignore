@@ -17,8 +17,8 @@ build/
 backend/dist/
 .vite/
 reference files
-apps\backend\.venv_stable
+apps/backend/.venv_stable
 
 .venv_new
 .venv_stable
-apps\backend\.venv
+apps/backend/.venv
