@@ -5,6 +5,8 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 ProjectStatus = Literal["open", "in_review", "completed", "disputed"]
+UUID_PATTERN = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+ALGORAND_ADDRESS_PATTERN = r"^[A-Z2-7]{58}$"
 
 
 class ProjectCreateRequest(BaseModel):
@@ -16,10 +18,10 @@ class ProjectCreateRequest(BaseModel):
 
 
 class ProjectRecord(BaseModel):
-    project_id: str = Field(default_factory=lambda: str(uuid4()))
+    project_id: str = Field(default_factory=lambda: str(uuid4()), pattern=UUID_PATTERN)
     app_id: int
-    client_wallet: str
-    dev_wallet: str | None = None
+    client_wallet: str = Field(pattern=ALGORAND_ADDRESS_PATTERN)
+    dev_wallet: str | None = Field(default=None, pattern=ALGORAND_ADDRESS_PATTERN)
     title: str
     description: str
     requirements: list[str]
@@ -32,7 +34,7 @@ class ProjectRecord(BaseModel):
 
 
 class ProjectCreateResponse(BaseModel):
-    project_id: str
+    project_id: str = Field(pattern=UUID_PATTERN)
     app_id: int
     status: ProjectStatus
     created_at: str

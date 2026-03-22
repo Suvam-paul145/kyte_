@@ -8,6 +8,7 @@ from services.jwt import create_token
 from services.nonce_store import nonce_store
 
 router = APIRouter()
+ALGORAND_ADDRESS_PATTERN = r"^[A-Z2-7]{58}$"
 
 
 def _verify_wallet_signature(wallet: str, nonce: str, signature: str) -> bool:
@@ -29,7 +30,7 @@ def _verify_wallet_signature(wallet: str, nonce: str, signature: str) -> bool:
 
 
 @router.get("/nonce", response_model=NonceResponse)
-def get_nonce(wallet: str = Query(..., min_length=20)) -> NonceResponse:
+def get_nonce(wallet: str = Query(..., pattern=ALGORAND_ADDRESS_PATTERN)) -> NonceResponse:
     nonce = nonce_store.issue(wallet)
     return NonceResponse(wallet=wallet, nonce=nonce)
 
