@@ -27,35 +27,30 @@ async def submit_work(request: SubmissionRequest):
     
     # 2. Scrape code
     try:
-        code_content = scraper_service.scrape_url(request.submission_url)
+        code_content = await scraper_service.scrape_url(request.submission_url)
     except Exception as e:
         project["status"] = "open"
         raise HTTPException(status_code=400, detail=f"Failed to scrape content: {str(e)}")
     
     # 3. Evaluate with Gemini
     try:
-        evaluation = gemini_service.evaluate_code(code_content, project["requirements"])
+        result = await gemini_service.evaluate_code(code_content, project["requirements"])
     except Exception as e:
         project["status"] = "open"
         raise HTTPException(status_code=500, detail=f"AI Evaluation failed: {str(e)}")
     
     # 4. Save result
-    result = EvaluationResult(
-        score=evaluation["score"],
-        passed=evaluation["passed"],
-        gap_report=evaluation["gap_report"],
-        timestamp=datetime.datetime.now().isoformat()
-    )
+    result.payment_released = result.overall_score >= project.get("score_threshold", 80)
     
     if "reports" not in project:
         project["reports"] = []
     project["reports"].append(result.dict())
     
     # 5. Handle blockchain update if passed
-    if result.passed:
+    if result.payment_released:
         project["status"] = "completed"
         # Mock posting score to chain
-        # In real scenario: algo_service.post_score(project["app_id"], result.score)
+        # In real scenario: algo_service.post_score(project["app_id"], result.overall_score)
     else:
         project["status"] = "open"
         
@@ -69,5 +64,5 @@ async def get_evaluation_status(project_id: str):
     
     return {
         "status": project.get("status", "open"),
-        "last_score": project["reports"][-1]["score"] if project.get("reports") else None
+        "last_score": project["reports"][-1]["overall_score"] if project.get("reports") else None
     }
