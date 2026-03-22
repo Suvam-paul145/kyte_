@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Network: Algorand TestNet](https://img.shields.io/badge/Network-Algorand%20TestNet-00D4AA.svg)](https://testnet.algoexplorer.io)
-[![AI: Gemini 1.5 Flash](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-4285F4.svg)](https://ai.google.dev)
+[![AI: Gemini 2.5 Flash](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-4285F4.svg)](https://ai.google.dev)
 [![Stack: FastAPI + React](https://img.shields.io/badge/Stack-FastAPI%20%2B%20React-009688.svg)](#tech-stack)
 
 ---
@@ -29,7 +29,7 @@ Traditional freelancing depends on trust or expensive escrow services. Disputes 
 
 - 💎 **Luminal Frontier UI**: A high-fidelity, immersive experience built for modern developers.
 - 🔐 **Algorand Escrow**: Secure, trustless payment handling on the Algorand TestNet.
-- 🤖 **AI-Enforced Policies**: Real-time auditing using Gemini 1.5 Flash to verify logic and security.
+- 🤖 **AI-Enforced Policies**: Real-time auditing using Gemini 2.5 Flash to verify logic and security.
 - 💳 **Pera Wallet Integration**: Seamless wallet connection and transaction signing.
 - 🔍 **Real-time Evaluation**: Interactive animations and confetti-feedback upon pass/fail.
 
@@ -39,7 +39,7 @@ Traditional freelancing depends on trust or expensive escrow services. Disputes 
 
 - **Blockchain**: Algorand (PyTeal, algosdk, Pera Wallet)
 - **Backend**: FastAPI (Python), Uvicorn, Jose (JWT)
-- **AI Engine**: Google Gemini 1.5 Flash
+- **AI Engine**: Google Gemini 2.5 Flash
 - **Frontend**: React, Vite, Framer Motion, Zustand
 - **Database**: Supabase (Auth/Google Sign-In)
 

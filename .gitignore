@@ -16,3 +16,20 @@ lerna-debug.log*
 build/
 backend/dist/
 .vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.toast
+.lucid
+.replit
+.history
